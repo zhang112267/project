@@ -116,6 +116,7 @@ window.acceptTask = function() {
 }
 
 let timerInterval = null;
+let targetTimestamp = null; 
 
 window.startOfflineTimer = function() {
     const btn = document.getElementById("timer-btn");
@@ -124,25 +125,24 @@ window.startOfflineTimer = function() {
 
     const currentMission = missions[participant.currentDay];
     const minutesAllowed = currentMission.duration || 30;
-    let totalSeconds = minutesAllowed * 60; 
-    const display = document.getElementById("timer-display");
+    
+    // 計算目標結束的毫秒數 (支援 Day 6 的 120 分鐘)
+    targetTimestamp = Date.now() + minutesAllowed * 60 * 1000;
 
     timerInterval = setInterval(() => {
-        let minutes = Math.floor(totalSeconds / 60);
-        let seconds = totalSeconds % 60;
+        const now = Date.now();
+        let remainingSeconds = Math.ceil((targetTimestamp - now) / 1000);
 
-        minutes = minutes < 10 ? "0" + minutes : minutes;
-        seconds = seconds < 10 ? "0" + seconds : seconds;
-
-        display.innerText = `${minutes}:${seconds}`;
-
-        if (totalSeconds <= 0) {
+        if (remainingSeconds <= 0) {
             clearInterval(timerInterval);
+            displayTime(0);
             triggerAchievePrompt();
+        } else {
+            displayTime(remainingSeconds);
         }
-        totalSeconds--;
     }, 1000);
 }
+
 
 window.skipTimerForDemo = function() {
     if (timerInterval) clearInterval(timerInterval);
@@ -354,6 +354,25 @@ window.notifyTaskCompleted = function(dayNum) {
             body: `Amazing job! You have successfully completed Day ${dayNum} challenge.`,
         });
     }
+    function displayTime(totalSeconds) {
+    let hours = Math.floor(totalSeconds / 3600);
+    let minutes = Math.floor((totalSeconds % 3600) / 60);
+    let seconds = totalSeconds % 60;
+
+    hours = hours < 10 ? "0" + hours : hours;
+    minutes = minutes < 10 ? "0" + minutes : minutes;
+    seconds = seconds < 10 ? "0" + seconds : seconds;
+
+    const display = document.getElementById("timer-display");
+    if (display) {
+        if (hours > 0) {
+            display.innerText = `${hours}:${minutes}:${seconds}`;
+        } else {
+            display.innerText = `${minutes}:${seconds}`;
+        }
+    }
+}
+
 
     // 2. 網頁內建的提示彈窗
     alert(`🎉 Success: Your Day ${dayNum} task has been successfully completed and recorded!`);
@@ -423,6 +442,25 @@ window.selectOption = function(questionNum, score, element) {
     group.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
     element.classList.add('selected');
 }
+function displayTime(totalSeconds) {
+    let hours = Math.floor(totalSeconds / 3600);
+    let minutes = Math.floor((totalSeconds % 3600) / 60);
+    let seconds = totalSeconds % 60;
+
+    hours = hours < 10 ? "0" + hours : hours;
+    minutes = minutes < 10 ? "0" + minutes : minutes;
+    seconds = seconds < 10 ? "0" + seconds : seconds;
+
+    const display = document.getElementById("timer-display");
+    if (display) {
+        if (hours > 0) {
+            display.innerText = `${hours}:${minutes}:${seconds}`;
+        } else {
+            display.innerText = `${minutes}:${seconds}`;
+        }
+    }
+}
+
 
 window.submitAssessment = async function() {
     if (Object.keys(participant.answers).length < 5) {
@@ -487,6 +525,7 @@ window.acceptTask = function() {
 }
 
 let timerInterval = null;
+let targetTimestamp = null; 
 
 window.startOfflineTimer = function() {
     const btn = document.getElementById("timer-btn");
@@ -495,23 +534,21 @@ window.startOfflineTimer = function() {
 
     const currentMission = missions[participant.currentDay];
     const minutesAllowed = currentMission.duration || 30;
-    let totalSeconds = minutesAllowed * 60; 
-    const display = document.getElementById("timer-display");
+    
+    // 計算目標結束的毫秒數 (支援 Day 6 的 120 分鐘)
+    targetTimestamp = Date.now() + minutesAllowed * 60 * 1000;
 
     timerInterval = setInterval(() => {
-        let minutes = Math.floor(totalSeconds / 60);
-        let seconds = totalSeconds % 60;
+        const now = Date.now();
+        let remainingSeconds = Math.ceil((targetTimestamp - now) / 1000);
 
-        minutes = minutes < 10 ? "0" + minutes : minutes;
-        seconds = seconds < 10 ? "0" + seconds : seconds;
-
-        display.innerText = `${minutes}:${seconds}`;
-
-        if (totalSeconds <= 0) {
+        if (remainingSeconds <= 0) {
             clearInterval(timerInterval);
+            displayTime(0);
             triggerAchievePrompt();
+        } else {
+            displayTime(remainingSeconds);
         }
-        totalSeconds--;
     }, 1000);
 }
 
