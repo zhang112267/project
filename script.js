@@ -378,12 +378,31 @@ window.notifyTaskCompleted = function(dayNum) {
     alert(`🎉 Success: Your Day ${dayNum} task has been successfully completed and recorded!`);
 }*/
 // 網頁開啟時，檢查有沒有之前存的進度
-const savedDay = localStorage.getItem("jomo_currentDay");
-if (savedDay) {
-    participant.currentDay = parseInt(savedDay);
-    participant.completedDays = JSON.parse(localStorage.getItem("jomo_completedDays")) || [];
-    participant.dailyStatus = JSON.parse(localStorage.getItem("jomo_dailyStatus")) || {};
-}
+// 🌿 網頁一打開時，自動讀取並恢復進度與畫面
+window.addEventListener("DOMContentLoaded", () => {
+    const savedDay = localStorage.getItem("jomo_currentDay");
+    const savedNickname = localStorage.getItem("jomo_nickname");
+    
+    if (savedDay && savedNickname) {
+        // 1. 恢復資料
+        participant.nickname = savedNickname;
+        participant.currentDay = parseInt(savedDay);
+        participant.completedDays = JSON.parse(localStorage.getItem("jomo_completedDays")) || [];
+        participant.dailyStatus = JSON.parse(localStorage.getItem("jomo_dailyStatus")) || {};
+
+        // 2. 直接隱藏前面的步驟，切換到挑戰畫面！
+        document.getElementById("step-nickname").classList.add("hidden");
+        document.getElementById("step-questionnaire").classList.add("hidden");
+        document.getElementById("step-result").classList.add("hidden");
+        document.getElementById("step-challenge").classList.remove("hidden");
+
+        // 3. 更新介面與歷史紀錄
+        updateChallengeUI();
+        updateScoreDisplay();
+        renderHistoryLog();
+    }
+});
+
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
