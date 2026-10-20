@@ -377,6 +377,14 @@ window.notifyTaskCompleted = function(dayNum) {
     // 2. 網頁內建的提示彈窗
     alert(`🎉 Success: Your Day ${dayNum} task has been successfully completed and recorded!`);
 }*/
+// 網頁開啟時，檢查有沒有之前存的進度
+const savedDay = localStorage.getItem("jomo_currentDay");
+if (savedDay) {
+    participant.currentDay = parseInt(savedDay);
+    participant.completedDays = JSON.parse(localStorage.getItem("jomo_completedDays")) || [];
+    participant.dailyStatus = JSON.parse(localStorage.getItem("jomo_dailyStatus")) || {};
+}
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -594,6 +602,11 @@ window.submitDayResult = function(status) {
     }
     updateScoreDisplay();
     renderHistoryLog(); 
+    // 自動把目前的進度存到瀏覽器裡
+localStorage.setItem("jomo_currentDay", participant.currentDay);
+localStorage.setItem("jomo_completedDays", JSON.stringify(participant.completedDays));
+localStorage.setItem("jomo_dailyStatus", JSON.stringify(participant.dailyStatus));
+
 }
 
 // 發送任務完成通知函式
