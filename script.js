@@ -6,14 +6,14 @@ let participant = {
     currentDay: 1,
     completedDays: [],
     dailyStatus: {},
-    dailyCompletionDates: {}
+    dailyCompletionDates: {},
+    lastCompletedDate: "" // 記錄上次完成任務的日期，用來限制「隔天才解鎖」
 };
 
-// 💡 如果未來有串接 Google 試算表 Apps Script，請將網址貼在下方引號內；若暫時只要單機版可留空
-const WEB_APP_URL = ""; 
+const WEB_APP_URL = ""; // 若有串接 Google 試算表可填入
 
 // ==========================================
-// 2. 網頁載入自動復原機制 (防止 F5 重新整理或關閉分頁後歸零)
+// 2. 網頁載入自動復原機制 (防止重新整理歸零)
 // ==========================================
 window.addEventListener("DOMContentLoaded", () => {
     const savedNickname = localStorage.getItem("jomo_nickname");
@@ -25,9 +25,13 @@ window.addEventListener("DOMContentLoaded", () => {
             participant.currentDay = parseInt(savedDay);
             participant.completedDays = JSON.parse(localStorage.getItem("jomo_completedDays")) || [];
             participant.dailyStatus = JSON.parse(localStorage.getItem("jomo_dailyStatus")) || {};
+            participant.lastCompletedDate = localStorage.getItem("jomo_lastCompletedDate") || "";
         }
 
-        // 自動隱藏前置步驟，直接切換到挑戰介面
+        // 檢查今天是否已經完成過今日挑戰，或者是否能進入
+        checkDayLockStatus();
+
+        // 自動隱藏前置步驟，切換到挑戰介面
         const stepNickname = document.getElementById("step-nickname");
         const stepQuestionnaire = document.getElementById("step-questionnaire");
         const stepResult = document.getElementById("step-result");
@@ -38,12 +42,11 @@ window.addEventListener("DOMContentLoaded", () => {
         if (stepResult) stepResult.classList.add("hidden");
         if (stepChallenge) stepChallenge.classList.remove("hidden");
 
-        // 重新整理後更新畫面上的各項數值與清單
         if (typeof updateChallengeUI === 'function') updateChallengeUI();
         if (typeof updateScoreDisplay === 'function') updateScoreDisplay();
         if (typeof renderHistoryLog === 'function') renderHistoryLog();
         
-        console.log(`歡迎回來，${savedNickname}！已自動恢復至第 ${participant.currentDay} 天`);
+        console.log(`歡迎回來，${savedNickname}！目前進度：第 ${participant.currentDay} 天`);
     }
 });
 
@@ -55,11 +58,9 @@ window.startChallengeSession = function() {
     if (nicknameInput && nicknameInput.value.trim() !== "") {
         participant.nickname = nicknameInput.value.trim();
         
-        // 首次登入寫入本地儲存
         localStorage.setItem("jomo_nickname", participant.nickname);
         localStorage.setItem("jomo_currentDay", participant.currentDay);
         
-        // 切換畫面至挑戰主頁
         const stepNickname = document.getElementById("step-nickname");
         const stepChallenge = document.getElementById("step-challenge");
         if (stepNickname) stepNickname.classList.add("hidden");
@@ -72,21 +73,43 @@ window.startChallengeSession = function() {
 };
 
 // ==========================================
-// 4. 任務計時器邏輯 (支援一般任務與 Day 6 的 120 分鐘深度專注)
+// 4. 嚴格時間檢查：確保「隔一天」才能進行下一個挑戰
+// ==========================================
+function checkDayLockStatus() {
+    const todayStr = new Date().toDateString(); // 取得今天的日期字串 (例如 "Wed Oct 21 2026")
+    
+    // 如果今天已經完成過當前天數的任務，鎖定按鈕並提示明天再來
+    if (participant.lastCompletedDate === todayStr) {
+        const timerBtn = document.getElementById("timer-btn");
+        if (timerBtn) {
+            timerBtn.disabled = true;
+            timerBtn.innerText = "今日挑戰已完成，請明天再來！";
+        }
+    }
+}
+
+// ==========================================
+// 5. 任務計時器邏輯 (支援 Day 6 的 120 分鐘深度專注，無任何 Skip)
 // ==========================================
 let timerInterval = null;
 let targetTimestamp = null; 
 
 window.startOfflineTimer = function() {
+    const todayStr = new Date().toDateString();
+    
+    // 嚴格阻擋：如果今天已經完成過，不能重複執行
+    if (participant.lastCompletedDate === todayStr) {
+        alert("你今天已經完成過挑戰了！依照規則，必須等到明天才能解鎖下一個挑戰喔！");
+        return;
+    }
+
     const btn = document.getElementById("timer-btn");
     if (btn) {
         btn.disabled = true;
         btn.innerText = "Challenge in Progress...";
     }
 
-    // 讀取當天任務設定的時長（預設 30 分鐘）
     const minutesAllowed = (typeof missions !== 'undefined' && missions[participant.currentDay]) ? (missions[participant.currentDay].duration || 30) : 30;
-    
     targetTimestamp = Date.now() + minutesAllowed * 60 * 1000;
 
     timerInterval = setInterval(() => {
@@ -125,13 +148,15 @@ function displayTime(totalSeconds) {
 }
 
 // ==========================================
-// 5. 任務結果提交 (記錄成果、更新畫面、儲存狀態與反思)
+// 6. 任務結果提交 (記錄完成日期、推進天數、同步反思)
 // ==========================================
 window.submitDayResult = function(status) {
     const todayDateStr = new Date().toLocaleDateString("zh-TW"); 
+    const todayServerStr = new Date().toDateString();
 
     participant.dailyStatus[participant.currentDay] = status;
     participant.dailyCompletionDates[participant.currentDay] = todayDateStr; 
+    participant.lastCompletedDate = todayServerStr; // 鎖定今天，強制隔天才可進行下一天
 
     if (status === "Achieve") {
         if (!participant.completedDays.includes(participant.currentDay)) {
@@ -146,14 +171,12 @@ window.submitDayResult = function(status) {
     const promptBox = document.getElementById("task-achieve-prompt-box");
     if (promptBox) promptBox.classList.add("hidden");
 
-    // 取得使用者的改善反思心得
     const reflectionInput = document.getElementById("reflection-input");
     const reflectionText = reflectionInput ? reflectionInput.value : "";
 
-    // 嘗試同步至雲端後台
     sendDataToCloud(participant.nickname, participant.currentDay, status, reflectionText);
 
-    // 進入下一天或完成 7 天總挑戰
+    // 進入下一天或完成總挑戰
     if (participant.currentDay < 7) {
         participant.currentDay++;
         if (typeof resetTaskUI === 'function') resetTaskUI();
@@ -168,39 +191,29 @@ window.submitDayResult = function(status) {
     if (typeof updateScoreDisplay === 'function') updateScoreDisplay();
     if (typeof renderHistoryLog === 'function') renderHistoryLog(); 
 
-    // 將最新進度安全寫入瀏覽器本地儲存
+    // 寫入 localStorage 永久保存
     localStorage.setItem("jomo_currentDay", participant.currentDay);
     localStorage.setItem("jomo_completedDays", JSON.stringify(participant.completedDays));
     localStorage.setItem("jomo_dailyStatus", JSON.stringify(participant.dailyStatus));
+    localStorage.setItem("jomo_lastCompletedDate", participant.lastCompletedDate);
 };
 
 // ==========================================
-// 6. 雲端同步函式 (串接 Google 試算表)
+// 7. 雲端同步函式
 // ==========================================
 async function sendDataToCloud(nickname, day, status, reflection) {
-    if (!WEB_APP_URL) {
-        console.log("提示：目前未設定雲端 API 網址，資料僅存於本機。");
-        return;
-    }
+    if (!WEB_APP_URL) return;
 
-    const payload = {
-        nickname: nickname,
-        day: day,
-        status: status,
-        reflection: reflection
-    };
+    const payload = { nickname, day, status, reflection };
 
     try {
         await fetch(WEB_APP_URL, {
             method: "POST",
             mode: "no-cors",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
-        console.log("數據已成功發送至雲端後台！");
     } catch (error) {
-        console.error("雲端傳送發生錯誤：", error);
+        console.error("雲端傳送錯誤：", error);
     }
 }
