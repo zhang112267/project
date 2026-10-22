@@ -217,3 +217,39 @@ async function sendDataToCloud(nickname, day, status, reflection) {
         console.error("雲端傳送錯誤：", error);
     }
 }
+// ==========================================
+// 3. 處理問卷與開始挑戰 (搭配你的 startAssessment)
+// ==========================================
+window.startAssessment = function() {
+    const nicknameInput = document.getElementById("nickname-input");
+    
+    // 檢查是否有輸入暱稱
+    if (nicknameInput && nicknameInput.value.trim() !== "") {
+        participant.nickname = nicknameInput.value.trim();
+    } else if (!participant.nickname) {
+        alert("請輸入你的暱稱或代號才能開始挑戰喔！");
+        return;
+    }
+    
+    // 將基本資料寫入瀏覽器本地儲存 (防止重新整理歸零)
+    localStorage.setItem("jomo_nickname", participant.nickname);
+    localStorage.setItem("jomo_currentDay", participant.currentDay);
+    
+    // 切換畫面：隱藏暱稱與問卷步驟，顯示挑戰主畫面
+    const stepNickname = document.getElementById("step-nickname");
+    const stepQuestionnaire = document.getElementById("step-questionnaire");
+    const stepResult = document.getElementById("step-result");
+    const stepChallenge = document.getElementById("step-challenge");
+
+    if (stepNickname) stepNickname.classList.add("hidden");
+    if (stepQuestionnaire) stepQuestionnaire.classList.add("hidden");
+    if (stepResult) stepResult.classList.add("hidden");
+    if (stepChallenge) stepChallenge.classList.remove("hidden");
+    
+    // 更新畫面的各項數據與狀態
+    if (typeof updateChallengeUI === 'function') updateChallengeUI();
+    if (typeof updateScoreDisplay === 'function') updateScoreDisplay();
+    if (typeof renderHistoryLog === 'function') renderHistoryLog();
+    
+    console.log("成功進入挑戰，目前使用者：", participant.nickname);
+};
