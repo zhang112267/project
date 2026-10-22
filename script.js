@@ -7,7 +7,7 @@ let participant = {
     completedDays: [],
     dailyStatus: {},
     dailyCompletionDates: {},
-    lastCompletedDate: "" // 記錄上次完成任務的日期，用來限制「隔天才解鎖」
+    lastCompletedDate: ""
 };
 
 const WEB_APP_URL = ""; // 若有串接 Google 試算表可填入
@@ -28,10 +28,9 @@ window.addEventListener("DOMContentLoaded", () => {
             participant.lastCompletedDate = localStorage.getItem("jomo_lastCompletedDate") || "";
         }
 
-        // 檢查今天是否已經完成過今日挑戰，或者是否能進入
         checkDayLockStatus();
 
-        // 自動隱藏前置步驟，切換到挑戰介面
+        // 如果之前已經填過名字並進入挑戰，才幫你直接回到挑戰畫面
         const stepNickname = document.getElementById("step-nickname");
         const stepQuestionnaire = document.getElementById("step-questionnaire");
         const stepResult = document.getElementById("step-result");
@@ -51,34 +50,54 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 3. 暱稱輸入與挑戰開始
+// 3. 第一步：使用者輸入名字後，進入問卷畫面（不跳過問卷！）
 // ==========================================
 window.startChallengeSession = function() {
     const nicknameInput = document.getElementById("nickname-input");
     if (nicknameInput && nicknameInput.value.trim() !== "") {
         participant.nickname = nicknameInput.value.trim();
-        
         localStorage.setItem("jomo_nickname", participant.nickname);
-        localStorage.setItem("jomo_currentDay", participant.currentDay);
         
+        // 隱藏暱稱輸入畫面，顯示問卷畫面
         const stepNickname = document.getElementById("step-nickname");
-        const stepChallenge = document.getElementById("step-challenge");
-        if (stepNickname) stepNickname.classList.add("hidden");
-        if (stepChallenge) stepChallenge.classList.remove("hidden");
+        const stepQuestionnaire = document.getElementById("step-questionnaire");
         
-        if (typeof updateChallengeUI === 'function') updateChallengeUI();
+        if (stepNickname) stepNickname.classList.add("hidden");
+        if (stepQuestionnaire) stepQuestionnaire.classList.remove("hidden");
+        
     } else {
         alert("請輸入你的暱稱或代號才能開始挑戰喔！");
     }
 };
 
 // ==========================================
-// 4. 嚴格時間檢查：確保「隔一天」才能進行下一個挑戰
+// 4. 第二步：使用者填完問卷後，才正式進入挑戰畫面 (startAssessment)
+// ==========================================
+window.startAssessment = function() {
+    // 這裡可以加上問卷驗證（如果需要的話），然後正式切換到挑戰介面
+    localStorage.setItem("jomo_currentDay", participant.currentDay);
+
+    const stepQuestionnaire = document.getElementById("step-questionnaire");
+    const stepResult = document.getElementById("step-result");
+    const stepChallenge = document.getElementById("step-challenge");
+
+    if (stepQuestionnaire) stepQuestionnaire.classList.add("hidden");
+    if (stepResult) stepResult.classList.add("hidden");
+    if (stepChallenge) stepChallenge.classList.remove("hidden");
+
+    if (typeof updateChallengeUI === 'function') updateChallengeUI();
+    if (typeof updateScoreDisplay === 'function') updateScoreDisplay();
+    if (typeof renderHistoryLog === 'function') renderHistoryLog();
+
+    console.log("問卷完成，正式進入挑戰！使用者：", participant.nickname);
+};
+
+// ==========================================
+// 5. 嚴格時間檢查：確保「隔一天」才能進行下一個挑戰
 // ==========================================
 function checkDayLockStatus() {
-    const todayStr = new Date().toDateString(); // 取得今天的日期字串 (例如 "Wed Oct 21 2026")
+    const todayStr = new Date().toDateString(); 
     
-    // 如果今天已經完成過當前天數的任務，鎖定按鈕並提示明天再來
     if (participant.lastCompletedDate === todayStr) {
         const timerBtn = document.getElementById("timer-btn");
         if (timerBtn) {
@@ -89,7 +108,7 @@ function checkDayLockStatus() {
 }
 
 // ==========================================
-// 5. 任務計時器邏輯 (支援 Day 6 的 120 分鐘深度專注，無任何 Skip)
+// 6. 任務計時器邏輯 (支援 Day 6 的 120 分鐘，無任何 Skip 漏洞)
 // ==========================================
 let timerInterval = null;
 let targetTimestamp = null; 
@@ -97,7 +116,6 @@ let targetTimestamp = null;
 window.startOfflineTimer = function() {
     const todayStr = new Date().toDateString();
     
-    // 嚴格阻擋：如果今天已經完成過，不能重複執行
     if (participant.lastCompletedDate === todayStr) {
         alert("你今天已經完成過挑戰了！依照規則，必須等到明天才能解鎖下一個挑戰喔！");
         return;
@@ -148,7 +166,7 @@ function displayTime(totalSeconds) {
 }
 
 // ==========================================
-// 6. 任務結果提交 (記錄完成日期、推進天數、同步反思)
+// 7. 任務結果提交 (記錄完成日期、推進天數、同步反思)
 // ==========================================
 window.submitDayResult = function(status) {
     const todayDateStr = new Date().toLocaleDateString("zh-TW"); 
@@ -156,7 +174,7 @@ window.submitDayResult = function(status) {
 
     participant.dailyStatus[participant.currentDay] = status;
     participant.dailyCompletionDates[participant.currentDay] = todayDateStr; 
-    participant.lastCompletedDate = todayServerStr; // 鎖定今天，強制隔天才可進行下一天
+    participant.lastCompletedDate = todayServerStr; 
 
     if (status === "Achieve") {
         if (!participant.completedDays.includes(participant.currentDay)) {
@@ -176,7 +194,6 @@ window.submitDayResult = function(status) {
 
     sendDataToCloud(participant.nickname, participant.currentDay, status, reflectionText);
 
-    // 進入下一天或完成總挑戰
     if (participant.currentDay < 7) {
         participant.currentDay++;
         if (typeof resetTaskUI === 'function') resetTaskUI();
@@ -191,7 +208,6 @@ window.submitDayResult = function(status) {
     if (typeof updateScoreDisplay === 'function') updateScoreDisplay();
     if (typeof renderHistoryLog === 'function') renderHistoryLog(); 
 
-    // 寫入 localStorage 永久保存
     localStorage.setItem("jomo_currentDay", participant.currentDay);
     localStorage.setItem("jomo_completedDays", JSON.stringify(participant.completedDays));
     localStorage.setItem("jomo_dailyStatus", JSON.stringify(participant.dailyStatus));
@@ -199,7 +215,7 @@ window.submitDayResult = function(status) {
 };
 
 // ==========================================
-// 7. 雲端同步函式
+// 8. 雲端同步函式
 // ==========================================
 async function sendDataToCloud(nickname, day, status, reflection) {
     if (!WEB_APP_URL) return;
@@ -217,39 +233,3 @@ async function sendDataToCloud(nickname, day, status, reflection) {
         console.error("雲端傳送錯誤：", error);
     }
 }
-// ==========================================
-// 3. 處理問卷與開始挑戰 (搭配你的 startAssessment)
-// ==========================================
-window.startAssessment = function() {
-    const nicknameInput = document.getElementById("nickname-input");
-    
-    // 檢查是否有輸入暱稱
-    if (nicknameInput && nicknameInput.value.trim() !== "") {
-        participant.nickname = nicknameInput.value.trim();
-    } else if (!participant.nickname) {
-        alert("請輸入你的暱稱或代號才能開始挑戰喔！");
-        return;
-    }
-    
-    // 將基本資料寫入瀏覽器本地儲存 (防止重新整理歸零)
-    localStorage.setItem("jomo_nickname", participant.nickname);
-    localStorage.setItem("jomo_currentDay", participant.currentDay);
-    
-    // 切換畫面：隱藏暱稱與問卷步驟，顯示挑戰主畫面
-    const stepNickname = document.getElementById("step-nickname");
-    const stepQuestionnaire = document.getElementById("step-questionnaire");
-    const stepResult = document.getElementById("step-result");
-    const stepChallenge = document.getElementById("step-challenge");
-
-    if (stepNickname) stepNickname.classList.add("hidden");
-    if (stepQuestionnaire) stepQuestionnaire.classList.add("hidden");
-    if (stepResult) stepResult.classList.add("hidden");
-    if (stepChallenge) stepChallenge.classList.remove("hidden");
-    
-    // 更新畫面的各項數據與狀態
-    if (typeof updateChallengeUI === 'function') updateChallengeUI();
-    if (typeof updateScoreDisplay === 'function') updateScoreDisplay();
-    if (typeof renderHistoryLog === 'function') renderHistoryLog();
-    
-    console.log("成功進入挑戰，目前使用者：", participant.nickname);
-};
