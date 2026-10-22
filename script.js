@@ -233,3 +233,56 @@ async function sendDataToCloud(nickname, day, status, reflection) {
         console.error("雲端傳送錯誤：", error);
     }
 }
+// ==========================================
+// 8. 數位焦慮問卷與計分系統 (讓問卷有分數與結果)
+// ==========================================
+window.submitQuestionnaire = function() {
+    // 範例：抓取問卷選項的分數（假設你的問卷有給予分數的 radio 或 checkbox）
+    // 這裡會依據使用者的選擇計算出一個初始的「數位焦慮指數」或分數
+    let totalScore = 0;
+    
+    // 假設你的問卷選項有 class="q-input" 或類似的選取項目
+    const questionnaireInputs = document.querySelectorAll('input[type="radio"]:checked, input[type="checkbox"]:checked');
+    
+    questionnaireInputs.forEach(input => {
+        // 如果選項有帶分數值，加總進去（預設沒填寫就給基本分）
+        totalScore += parseInt(input.value) || 5;
+    });
+
+    // 把分數存進全域變數或本地儲存
+    participant.initialScore = totalScore;
+    localStorage.setItem("jomo_initialScore", totalScore);
+
+    // 切換畫面：從問卷畫面 (step-questionnaire) 轉到 結果畫面 (step-result) 或直接進挑戰
+    const stepQuestionnaire = document.getElementById("step-questionnaire");
+    const stepResult = document.getElementById("step-result");
+    const stepChallenge = document.getElementById("step-challenge");
+
+    if (stepQuestionnaire) stepQuestionnaire.classList.add("hidden");
+    
+    // 如果你們有「結果頁面」讓大家看測驗分析，就先顯示結果頁；如果沒有，直接進挑戰
+    if (stepResult) {
+        stepResult.classList.remove("hidden");
+        // 把分數渲染到結果畫面上
+        const resultScoreText = document.getElementById("result-score-text");
+        if (resultScoreText) {
+            resultScoreText.innerText = `你的數位焦慮指數：${totalScore} 分`;
+        }
+    } else if (stepChallenge) {
+        stepChallenge.classList.remove("hidden");
+    }
+
+    if (typeof updateScoreDisplay === 'function') updateScoreDisplay();
+    console.log("問卷已提交，計算得分：", totalScore);
+};
+
+// 更新畫面上分數顯示的標準函式
+window.updateScoreDisplay = function() {
+    const scoreVal = document.getElementById("score-val");
+    if (scoreVal) {
+        // 總分 = 問卷初始分數 + 完成天數獲得的分數
+        const initial = parseInt(localStorage.getItem("jomo_initialScore")) || 0;
+        const taskBonus = participant.completedDays.length * 10;
+        scoreVal.innerText = initial + taskBonus;
+    }
+};
