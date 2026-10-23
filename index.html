@@ -12,6 +12,7 @@
             --accent-color: #38bdf8;
             --accent-hover: #0ea5e9;
             --border-color: #30363d;
+            --success-color: #238636;
             --danger-color: #f87171;
         }
         body {
@@ -21,9 +22,26 @@
             margin: 0;
             padding: 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             min-height: 100vh;
+        }
+        /* 👑 JOMO Lab 標題獨立置頂 */
+        .app-header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+        .app-header h1 {
+            color: #f0f6fc;
+            margin: 0;
+            font-size: 32px;
+            letter-spacing: 1px;
+        }
+        .app-header p {
+            color: #8b949e;
+            margin: 5px 0 0 0;
+            font-size: 14px;
         }
         .container {
             width: 100%;
@@ -33,15 +51,16 @@
             border-radius: 16px;
             padding: 30px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-sizing: border-box;
         }
-        h1, h2, h3 {
+        h2, h3 {
             color: #f0f6fc;
             text-align: center;
         }
         .hidden {
             display: none !important;
         }
-        input[type="text"], textarea {
+        input[type="text"], select, textarea {
             width: 100%;
             padding: 12px;
             margin: 10px 0 20px 0;
@@ -67,12 +86,31 @@
         button:hover {
             background-color: var(--accent-hover);
         }
+        button:disabled {
+            background-color: #30363d;
+            color: #8b949e;
+            cursor: not-allowed;
+        }
         .btn-skip {
             background-color: #334155;
             color: #94a3b8;
         }
         .btn-skip:hover {
             background-color: #475569;
+        }
+        .btn-success {
+            background-color: var(--success-color);
+            color: #fff;
+        }
+        .btn-success:hover {
+            background-color: #2ea043;
+        }
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: #0d1117;
+        }
+        .btn-danger:hover {
+            background-color: #ef4444;
         }
         .question-box {
             margin-bottom: 20px;
@@ -102,39 +140,41 @@
 </head>
 <body>
 
+    <!-- 👑 JOMO Lab 標題獨立置頂 -->
+    <div class="app-header">
+        <h1>JOMO Lab</h1>
+        <p>Digital Detox & Life Control Laboratory</p>
+    </div>
+
 <div class="container">
     <!-- Step 1: Nickname Input -->
     <div id="step-nickname">
-        <h1>JOMO Lab</h1>
-        <p style="text-align: center; color: #8b949e;">Digital Detox & Life Control Laboratory</p>
+        <h2>Welcome</h2>
         <label for="nickname-input">Enter your nickname or handle:</label>
-        <input type="text" id="nickname-input" placeholder="e.g zhang(or your preferred nickname)">
+        <input type="text" id="nickname-input" placeholder="e.g. baobao、zhang(your preferred nickname)">
         <button onclick="startChallengeSession()">Next: Deep Assessment</button>
     </div>
 
     <!-- Step 2: 10-Question Deep Assessment -->
     <div id="step-questionnaire" class="hidden">
-        <h2>Digital Anxiety & Life Control Assessment</h2>
+        <h2>Digital Anxiety Assessment</h2>
         <p style="text-align: center; color: #8b949e; font-size: 14px;">Please answer honestly based on your state over the past week (1 = Never, 4 = Always)</p>
         
-        <div id="questions-container">
-            <!-- Questions generated dynamically by JS -->
-        </div>
+        <div id="questions-container"></div>
 
         <button onclick="submitQuestionnaire()">Submit Assessment & View Analysis</button>
     </div>
 
-    <!-- Step 3: Assessment Results -->
+    <!-- Step 3: Assessment Feedback & Results -->
     <div id="step-result" class="hidden">
-        <h2>Assessment Results</h2>
+        <h2>Assessment Feedback & Analysis</h2>
         <div class="question-box" style="text-align: center;">
-            <p id="result-score-text" style="font-size: 20px; font-weight: bold; color: var(--accent-color);">Calculating...</p>
-            <p style="color: #8b949e; font-size: 14px;">This score serves as the baseline for your 7-day digital detox journey. Ready to reclaim your real life?</p>
+            <p id="result-score-text" style="font-size: 18px; font-weight: bold; color: var(--accent-color); line-height: 1.6;">Analyzing your responses...</p>
         </div>
         <button onclick="startAssessment()">Enter 7-Day Challenge Dashboard</button>
     </div>
 
-    <!-- Step 4: 7-Day Challenge Main Interface -->
+    <!-- Step 4: 7-Day Challenge Main Dashboard -->
     <div id="step-challenge" class="hidden">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2 id="challenge-title">Day 1 Challenge</h2>
@@ -145,26 +185,54 @@
             <p id="mission-desc" style="font-size: 16px; line-height: 1.5;">Loading mission content...</p>
         </div>
 
-        <!-- Timer Section -->
         <div id="timer-display">30:00</div>
         <button id="timer-btn" onclick="startOfflineTimer()">Start Timer Challenge</button>
         <button class="btn-skip" onclick="skipTimer()">[Test Mode] Skip Timer</button>
 
-        <!-- Daily Reflection Textarea -->
-        <div style="margin-top: 20px;">
-            <label for="reflection-input">✍️ Daily Reflection & JOMO Notes:</label>
-            <textarea id="reflection-input" rows="3" placeholder="Record your offline feelings or improvements today..."></textarea>
+        <div id="completion-section" class="hidden" style="margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <div>
+                <label id="input-label" for="reflection-input">✍️ What did you do today?</label>
+                <textarea id="reflection-input" rows="3" placeholder="Record your response..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-success" style="flex: 2;" onclick="submitDayResult('Achieve')">Complete (Achieve)</button>
+                <button class="btn-danger" style="flex: 1;" onclick="submitDayResult('Fail')">Fail</button>
+            </div>
         </div>
 
-        <button onclick="submitDayResult('Achieve')">Complete Today's Challenge & Save</button>
-
-        <!-- History Log -->
         <div style="margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px;">
             <h3>📜 Challenge History Log</h3>
             <div id="history-log-box">
                 <p class="log-item">No completion records yet</p>
             </div>
         </div>
+    </div>
+
+    <!-- Step 5: Independent 11愛 Page & Team Photo -->
+    <div id="step-11ai" class="hidden">
+        <h2>🎉 11愛 - Final Celebration</h2>
+        <div class="question-box" style="text-align: center;">
+            <p style="font-size: 16px; line-height: 1.6; color: #f0f6fc;">
+                You have successfully completed the 7-day digital detox challenge!<br><br>
+                🎁 <strong>Welcome to 11愛 to claim an exquisite little gift!</strong>
+            </p>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <label for="school-level-select">🏷️ Select Level & Enter Seat (e.g., Senior High - 10105):</label>
+            <select id="school-level-select">
+                <option value="Junior High">Junior High (國中)</option>
+                <option value="Senior High" selected>Senior High (高中)</option>
+            </select>
+            <input type="text" id="class-seat-input" placeholder="Enter class & seat number (e.g., 10105)">
+        </div>
+
+        <h3>👥 Our Team</h3>
+        <div style="text-align: center; margin: 15px 0;">
+            <img src="team-photo.webp" alt="Team Photo" style="width: 100%; max-width: 100%; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover;">
+        </div>
+
+        <button class="btn-success" onclick="submitFinalClassSeat()">Submit Final Info</button>
     </div>
 </div>
 
