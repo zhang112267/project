@@ -12,7 +12,7 @@ let participant = {
 };
 
 // Optional Google Sheets Apps Script URL
-const WEB_APP_URL = ""; 
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw8F1jKlDnoMKkVGB-3RUsNkfrvZ3s0pDN0FWy3wBnS_WXdSzvThpnKWwSqAyeXTZjT/exec"; 
 
 // 10 Deep Digital Anxiety Assessment Questions (English)
 const questionsList = [
