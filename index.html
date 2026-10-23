@@ -3,24 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JOMO Lab - Digital Well-being & Transformation</title>
+    <title>JOMO Lab - 7-Day Digital Detox Challenge</title>
     <style>
         :root {
-            --bg-color: #090d16;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --card-border: rgba(255, 255, 255, 0.1);
-            --text-main: #f8fafc;
-            --text-secondary: #94a3b8;
-            --accent: #38bdf8;
-            --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
-            --success: #34d399;
-            --locked-bg: rgba(15, 23, 42, 0.3);
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-color: #c9d1d9;
+            --accent-color: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --border-color: #30363d;
+            --danger-color: #f87171;
         }
-
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: radial-gradient(circle at top right, #1e1b4b, var(--bg-color));
-            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
             padding: 20px;
             display: flex;
@@ -28,407 +25,149 @@
             align-items: center;
             min-height: 100vh;
         }
-
         .container {
             width: 100%;
-            max-width: 650px;
-        }
-
-        .app-header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .app-header h1 {
-            font-size: 2.2rem;
-            margin: 0 0 8px 0;
-            background: linear-gradient(135deg, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
-        }
-
-        .app-header p {
-            color: var(--text-secondary);
-            margin: 0;
-            font-size: 1rem;
-        }
-
-        .card {
+            max-width: 600px;
             background-color: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--card-border);
+            border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 35px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            margin-bottom: 20px;
-            animation: fadeIn 0.4s ease-in-out;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        h1, h2, h3 {
+            color: #f0f6fc;
+            text-align: center;
         }
-
         .hidden {
             display: none !important;
         }
-
-        h3 {
-            margin-top: 0;
-            letter-spacing: -0.5px;
-        }
-
-        p {
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-
         input[type="text"], textarea {
             width: 100%;
-            padding: 14px 16px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background-color: rgba(15, 23, 42, 0.6);
-            color: var(--text-main);
-            font-size: 1.05rem;
-            margin-top: 15px;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
-            font-family: inherit;
-        }
-
-        input[type="text"]:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        button {
-            background: var(--accent-gradient);
-            color: #0f172a;
-            border: none;
-            padding: 14px 20px;
-            border-radius: 10px;
-            font-size: 1.05rem;
-            font-weight: 700;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 25px;
-            transition: transform 0.1s, opacity 0.2s;
-            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
-        }
-
-        button:hover {
-            opacity: 0.92;
-            transform: translateY(-1px);
-        }
-
-        button:active {
-            transform: translateY(1px);
-        }
-
-        .question-group {
-            margin-bottom: 30px;
-            background: rgba(15, 23, 42, 0.4);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .question-group label {
-            display: block;
-            margin-bottom: 15px;
-            font-weight: 600;
-            font-size: 1.05rem;
-            color: #e2e8f0;
-        }
-
-        .options-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .option-btn {
-            background-color: rgba(51, 65, 85, 0.5);
-            padding: 12px 16px;
+            padding: 12px;
+            margin: 10px 0 20px 0;
+            background-color: #0d1117;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid transparent;
-            font-size: 0.95rem;
-            color: #cbd5e1;
-        }
-
-        .option-btn:hover {
-            background-color: rgba(71, 85, 105, 0.8);
             color: #fff;
+            box-sizing: border-box;
         }
-
-        .option-btn.selected {
-            background-color: rgba(2, 132, 199, 0.4);
-            border-color: var(--accent);
-            color: #fff;
-            font-weight: 600;
-        }
-
-        .result-highlight {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--accent);
-            margin: 20px 0;
-            background: linear-gradient(135deg, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* 進度條樣式 */
-        .progress-container {
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 10px;
-            height: 14px;
+        button {
             width: 100%;
-            margin: 20px 0 10px 0;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .progress-bar {
-            background: var(--accent-gradient);
-            height: 100%;
-            width: 0%;
-            transition: width 0.4s ease;
-        }
-
-        .progress-text {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-            text-align: right;
-        }
-
-        /* 挑戰任務清單與解鎖機制 */
-        .challenge-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 15px;
-            text-align: left;
-        }
-
-        .challenge-item {
-            background: rgba(15, 23, 42, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 14px 18px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            padding: 12px;
+            background-color: var(--accent-color);
+            color: #0d1117;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background 0.2s;
+            margin-top: 10px;
         }
-
-        .challenge-item.locked {
-            background: var(--locked-bg);
-            opacity: 0.5;
-            cursor: not-allowed;
-            border-style: dashed;
+        button:hover {
+            background-color: var(--accent-hover);
         }
-
-        .challenge-item:not(.locked):hover {
-            background: rgba(30, 41, 59, 0.8);
+        .btn-skip {
+            background-color: #334155;
+            color: #94a3b8;
         }
-
-        .challenge-item.completed {
-            border-color: var(--success);
-            background: rgba(52, 211, 153, 0.1);
+        .btn-skip:hover {
+            background-color: #475569;
         }
-
-        .challenge-item.completed span {
-            text-decoration: line-through;
-            color: var(--success);
+        .question-box {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #0d1117;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
-
-        /* 通關徽章與慶祝動畫區 */
-        .master-badge {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(52, 211, 153, 0.2));
-            border: 2px solid var(--success);
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 25px;
+        .options label {
+            display: block;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+        #timer-display {
+            font-size: 48px;
             text-align: center;
-            animation: bounceIn 0.5s ease;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin: 20px 0;
         }
-
-        @keyframes bounceIn {
-            0% { transform: scale(0.9); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+        .log-item {
+            font-size: 14px;
+            color: #8b949e;
+            margin: 5px 0;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- 頂部固定大標題 -->
-        <div class="app-header">
-            <h1>🌿 JOMO Lab</h1>
-            <p>Digital Well-being & Transformation Platform</p>
+<div class="container">
+    <!-- Step 1: Nickname Input -->
+    <div id="step-nickname">
+        <h1>JOMO Lab</h1>
+        <p style="text-align: center; color: #8b949e;">Digital Detox & Life Control Laboratory</p>
+        <label for="nickname-input">Enter your nickname or handle:</label>
+        <input type="text" id="nickname-input" placeholder="e.g zhang(or your preferred nickname)">
+        <button onclick="startChallengeSession()">Next: Deep Assessment</button>
+    </div>
+
+    <!-- Step 2: 10-Question Deep Assessment -->
+    <div id="step-questionnaire" class="hidden">
+        <h2>Digital Anxiety & Life Control Assessment</h2>
+        <p style="text-align: center; color: #8b949e; font-size: 14px;">Please answer honestly based on your state over the past week (1 = Never, 4 = Always)</p>
+        
+        <div id="questions-container">
+            <!-- Questions generated dynamically by JS -->
         </div>
 
-        <!-- STEP 1: 暱稱輸入卡片 -->
-        <div id="step-nickname" class="card">
-            <h3>Get Started</h3>
-            <p>Take control of your digital life. Enter your nickname or ID to start your baseline evaluation.</p>
-            <input type="text" id="nickname-input" placeholder="e.g. zhang (or your preferred nickname)" maxlength="20">
-            <button onclick="startAssessment()">Start Assessment</button>
+        <button onclick="submitQuestionnaire()">Submit Assessment & View Analysis</button>
+    </div>
+
+    <!-- Step 3: Assessment Results -->
+    <div id="step-result" class="hidden">
+        <h2>Assessment Results</h2>
+        <div class="question-box" style="text-align: center;">
+            <p id="result-score-text" style="font-size: 20px; font-weight: bold; color: var(--accent-color);">Calculating...</p>
+            <p style="color: #8b949e; font-size: 14px;">This score serves as the baseline for your 7-day digital detox journey. Ready to reclaim your real life?</p>
+        </div>
+        <button onclick="startAssessment()">Enter 7-Day Challenge Dashboard</button>
+    </div>
+
+    <!-- Step 4: 7-Day Challenge Main Interface -->
+    <div id="step-challenge" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 id="challenge-title">Day 1 Challenge</h2>
+            <div style="font-size: 14px; color: var(--accent-color);">Total Score: <span id="score-val">0</span> pts</div>
+        </div>
+        
+        <div class="question-box">
+            <p id="mission-desc" style="font-size: 16px; line-height: 1.5;">Loading mission content...</p>
         </div>
 
-        <!-- STEP 2: FOMO 問卷卡片 -->
-        <div id="step-questionnaire" class="card hidden">
-            <h3>📊 Social Media Anxiety Evaluation</h3>
-            <p style="margin-bottom: 25px;">Answer honestly to get your accurate digital footprint score.</p>
-            
-            <!-- Q1 -->
-            <div class="question-group" data-q="1">
-                <label>1. How often do you check social media feeds right after waking up?</label>
-                <div class="options-grid">
-                    <div class="option-btn" onclick="selectOption(1, 1, this)">Under 5 times a day</div>
-                    <div class="option-btn" onclick="selectOption(1, 3, this)">5 or more times a day</div>
-                    <div class="option-btn" onclick="selectOption(1, 5, this)">Every time you check your phone</div>
-                </div>
-            </div>
+        <!-- Timer Section -->
+        <div id="timer-display">30:00</div>
+        <button id="timer-btn" onclick="startOfflineTimer()">Start Timer Challenge</button>
+        <button class="btn-skip" onclick="skipTimer()">[Test Mode] Skip Timer</button>
 
-            <!-- Q2 -->
-            <div class="question-group" data-q="2">
-                <label>2. How do you feel when you see friends hanging out without you online?</label>
-                <div class="options-grid">
-                    <div class="option-btn" onclick="selectOption(2, 1, this)">Totally fine / Happy for them</div>
-                    <div class="option-btn" onclick="selectOption(2, 3, this)">A bit left out</div>
-                    <div class="option-btn" onclick="selectOption(2, 5, this)">Anxious and restless</div>
-                </div>
-            </div>
-
-            <!-- Q3 -->
-            <div class="question-group" data-q="3">
-                <label>3. How often do you multitask with your phone while studying or working?</label>
-                <div class="options-grid">
-                    <div class="option-btn" onclick="selectOption(3, 1, this)">Almost never</div>
-                    <div class="option-btn" onclick="selectOption(3, 3, this)">Every hour or so</div>
-                    <div class="option-btn" onclick="selectOption(3, 5, this)">Constantly / Multitasking</div>
-                </div>
-            </div>
-
-            <!-- Q4 -->
-            <div class="question-group" data-q="4">
-                <label>4. Do you feel pressured to reply immediately to messages or keep up with viral trends?</label>
-                <div class="options-grid">
-                    <div class="option-btn" onclick="selectOption(4, 1, this)">Zero pressure</div>
-                    <div class="option-btn" onclick="selectOption(4, 3, this)">Moderate pressure</div>
-                    <div class="option-btn" onclick="selectOption(4, 5, this)">High pressure</div>
-                </div>
-            </div>
-
-            <!-- Q5 -->
-            <div class="question-group" data-q="5">
-                <label>5. How would you rate your sleep quality affected by late-night scrolling?</label>
-                <div class="options-grid">
-                    <div class="option-btn" onclick="selectOption(5, 1, this)">Great sleep</div>
-                    <div class="option-btn" onclick="selectOption(5, 3, this)">Sometimes delayed</div>
-                    <div class="option-btn" onclick="selectOption(5, 5, this)">Frequently disrupted</div>
-                </div>
-            </div>
-
-            <button onclick="submitAssessment()">Submit Assessment & Enter JOMO Lab</button>
+        <!-- Daily Reflection Textarea -->
+        <div style="margin-top: 20px;">
+            <label for="reflection-input">✍️ Daily Reflection & JOMO Notes:</label>
+            <textarea id="reflection-input" rows="3" placeholder="Record your offline feelings or improvements today..."></textarea>
         </div>
 
-        <!-- STEP 3: 結果顯示卡片 -->
-        <div id="step-result" class="card hidden" style="text-align: center;">
-            <h3>🎯 Your Baseline Results</h3>
-            <p>Participant: <span id="res-nickname" style="color: var(--accent); font-weight: bold;"></span></p>
-            
-            <div id="res-level" class="result-highlight">Calculating...</div>
-            <p id="res-description" style="color: #cbd5e1; margin-bottom: 25px;"></p>
+        <button onclick="submitDayResult('Achieve')">Complete Today's Challenge & Save</button>
 
-            <button onclick="enterChallengePhase()">Proceed to 7-Day JOMO Challenge</button>
+        <!-- History Log -->
+        <div style="margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+            <h3>📜 Challenge History Log</h3>
+            <div id="history-log-box">
+                <p class="log-item">No completion records yet</p>
+            </div>
         </div>
+    </div>
+</div>
 
-        <!-- STEP 4: 7天挑戰卡片 (升級版：進度條、解鎖、筆記與徽章) -->
-        <div id="step-challenge" class="card hidden" style="text-align: center;">
-            <h3>🚀 7-Day JOMO Challenge Tracker</h3>
-            
-            <!-- 即時進度條 -->
-            <div class="progress-container">
-                <div id="challenge-progress-bar" class="progress-bar"></div>
-            </div>
-            <div id="challenge-progress-text" class="progress-text">Completed 0 of 7 days (0%)</div>
-
-            <!-- 當前解鎖的每日任務專屬面板 -->
-            <!-- 當前解鎖的每日任務專屬面板 -->
-            <!-- 當前解鎖的每日任務專屬面板 -->
-            <div id="daily-mission-card" class="daily-mission-card">
-                <h4 id="mission-title" style="color: var(--accent); margin-top: 0; font-size: 1.2rem;">Day 1: 30-Min Offline Before Bed</h4>
-                <p id="mission-desc">Put your phone away and stay offline for 30 minutes before sleep.</p>
-                
-                <!-- 第 2 天開始要求的任務前置反思框 -->
-                <div id="task-pre-reflection-box" class="hidden" style="text-align: left; margin-top: 20px;">
-                    <label style="font-weight: 600; font-size: 0.95rem; color: #38bdf8;">✍️ Pre-Task Reflection (Required):</label>
-                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 5px 0 10px 0;">Write down what you felt or improved from yesterday (中英文皆可).</p>
-                    <textarea id="daily-pre-reflection" rows="3" placeholder="I felt that... / 我改善了..."></textarea>
-                    <button onclick="acceptTask()" style="margin-top: 10px; background: var(--accent); color: #0f172a;">Accept & Start Task</button>
-                </div>
-
-                <!-- 執行區 (支援倒數計時 或 整天任務按鈕) -->
-                <div id="task-active-box" style="margin-top: 20px;">
-                    <!-- 計時器模式 (Day 1, 4, 6) -->
-                    <div id="timer-section">
-                        <div id="timer-display" class="timer-display">30:00</div>
-                        <button id="timer-btn" onclick="startOfflineTimer()" style="background: var(--success); color: #0f172a;">Challenge accepted</button>
-                        <button onclick="skipTimerForDemo()" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-secondary); font-size: 0.85rem; padding: 8px; margin-top: 10px;">⚡ [Demo] Skip 30 mins (For Testing)</button>
-                    </div>
-
-                    <!-- 整天任務模式 (Day 2, 3, 5, 7) -->
-                    <div id="fullday-section" class="hidden">
-                        <p style="color: var(--success); font-weight: 600; margin: 15px 0;">📌 This is an Entire Day Challenge!</p>
-                        <button onclick="completeFullDayTask()" style="background: var(--success); color: #0f172a;">Challenge accepted</button>
-                    </div>
-                </div>
-
-                <!-- 任務結束後的成效回報區 (Achieve / Not Achieve) -->
-                <div id="task-achieve-prompt-box" class="hidden" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                    <p style="font-weight: 600; color: #f8fafc; margin-bottom: 15px;">Did you achieve today's challenge?</p>
-                    <div style="display: flex; gap: 12px;">
-                        <button onclick="submitDayResult('Achieve')" style="background: #34d399; color: #0f172a; margin-top: 0; font-weight: bold;">✅ Achieve</button>
-                        <button onclick="submitDayResult('Not Achieve')" style="background: #38bdf8; color: #0f172a; margin-top: 0; font-weight: bold;">❌ Not Achieve</button>
-                    </div>
-                </div>
-            </div>
-            <!-- 心得筆記區 -->
-            <div style="margin-top: 25px; text-align: left;">
-                <label style="font-weight: 600; font-size: 0.95rem; color: #e2e8f0;">📝 Daily Reflection / JOMO Notes:</label>
-                <textarea id="reflection-input" rows="3" placeholder="Write your thoughts or offline experiences here..."></textarea>
-                <button onclick="saveReflection()" style="margin-top: 12px; background: rgba(56, 189, 248, 0.2); border: 1px solid var(--accent); color: var(--accent);">Save Reflection to Firebase</button>
-            </div>
-
-            <!-- 通關徽章容器 -->
-            <!-- 通關徽章與合照區塊 (全部 7 天完成時顯示) -->
-            <div id="master-badge-box" class="master-badge hidden">
-                <h3 style="color: var(--success); margin-bottom: 5px;">🏆 Ultimate JOMO Master Unlocked!</h3>
-                <p style="margin: 0 0 15px 0; color: #f8fafc; font-size: 0.95rem;">Amazing work! You've successfully conquered the 7-day digital transformation challenge.</p>
-                
-                <!-- 【新增】恭喜語與合照放置區 -->
-                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 20px; margin-top: 15px; text-align: center;">
-                    <p style="font-size: 1.1rem; font-weight: bold; color: var(--accent); margin-bottom: 15px;">
-                        恭喜您完成了挑戰，請截圖您的挑戰結果並帶著您的心得至十一愛領取精美小禮物！
-                    </p>
-                    
-                    <!-- 組員合照預留位置 -->
-                    <img src="team-photo.webp" alt="Team Photo" style="width: 100%; max-width: 400px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                        
-                    </div>
-                </div>
-            </div>
-
-    <!-- 邏輯腳本 -->
-    <script type="module" src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
