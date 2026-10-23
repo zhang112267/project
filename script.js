@@ -13,7 +13,7 @@ let participant = {
     initialScore: 0
 };
 
-const WEB_APP_URL = ""; // 請填入你的 Apps Script 網址
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw8F1jKlDnoMKkVGB-3RUsNkfrvZ3s0pDN0FWy3wBnS_WXdSzvThpnKWwSqAyeXTZjT/exec"; // 請填入你的 Apps Script 網址
 
 // 10 Deep Digital Anxiety Assessment Questions
 const questionsList = [
