@@ -8,11 +8,12 @@ let participant = {
     completedDays: [],
     dailyStatus: {},
     dailyCompletionDates: {},
+    dailyStartTimes: {}, // 紀錄每一天的開始時間
     lastCompletedDate: "",
     initialScore: 0
 };
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw8F1jKlDnoMKkVGB-3RUsNkfrvZ3s0pDN0FWy3wBnS_WXdSzvThpnKWwSqAyeXTZjT/exec"; 
+const WEB_APP_URL = ""; // 請填入你的 Apps Script 網址
 
 // 10 Deep Digital Anxiety Assessment Questions
 const questionsList = [
@@ -40,7 +41,7 @@ const missions = {
 };
 
 // ==========================================
-// 2. Automatic State Restoration & Background Timer Sync
+// 2. Automatic State Restoration & Timing
 // ==========================================
 let timerInterval = null;
 
@@ -61,6 +62,7 @@ window.addEventListener("DOMContentLoaded", () => {
             participant.currentDay = parseInt(savedDay);
             participant.completedDays = JSON.parse(localStorage.getItem("jomo_completedDays")) || [];
             participant.dailyStatus = JSON.parse(localStorage.getItem("jomo_dailyStatus")) || {};
+            participant.dailyStartTimes = JSON.parse(localStorage.getItem("jomo_dailyStartTimes")) || {};
             participant.lastCompletedDate = localStorage.getItem("jomo_lastCompletedDate") || "";
         }
 
@@ -77,6 +79,12 @@ window.addEventListener("DOMContentLoaded", () => {
             renderHistoryLog();
             checkDayLockStatus();
             
+            // 記錄當前挑戰開始時間（若尚未記錄）
+            if (!participant.dailyStartTimes[participant.currentDay]) {
+                participant.dailyStartTimes[participant.currentDay] = new Date().toLocaleTimeString();
+                localStorage.setItem("jomo_dailyStartTimes", JSON.stringify(participant.dailyStartTimes));
+            }
+
             if (participant.currentDay > 1) {
                 restoreTimerState();
             }
@@ -155,6 +163,12 @@ window.submitQuestionnaire = function() {
 
 window.startAssessment = function() {
     localStorage.setItem("jomo_currentDay", participant.currentDay);
+    
+    // 記錄第一天的開始時間
+    if (!participant.dailyStartTimes[1]) {
+        participant.dailyStartTimes[1] = new Date().toLocaleTimeString();
+        localStorage.setItem("jomo_dailyStartTimes", JSON.stringify(participant.dailyStartTimes));
+    }
 
     document.getElementById("step-result").classList.add("hidden");
     document.getElementById("step-challenge").classList.remove("hidden");
@@ -275,11 +289,13 @@ function displayTime(totalSeconds) {
 }
 
 // ==========================================
-// 5. Task Submission & 11愛 Transition
+// 5. Task Submission & Timing Capture
 // ==========================================
 window.submitDayResult = function(status) {
     const todayDateStr = new Date().toLocaleDateString("en-US"); 
     const todayServerStr = new Date().toDateString();
+    const endTime = new Date().toLocaleTimeString(); // 捕捉結束時間
+    const startTime = participant.dailyStartTimes[participant.currentDay] || "N/A"; // 取得開始時間
 
     participant.dailyStatus[participant.currentDay] = status;
     participant.dailyCompletionDates[participant.currentDay] = todayDateStr; 
@@ -301,7 +317,17 @@ window.submitDayResult = function(status) {
         reflectionText = "Failed";
     }
 
-    sendDataToCloud(participant.nickname, participant.initialScore, participant.classSeat, participant.currentDay, status, reflectionText);
+    // 將開始時間、結束時間與回答一併傳送到 Google 試算表
+    sendDataToCloud(
+        participant.nickname, 
+        participant.initialScore, 
+        participant.classSeat, 
+        participant.currentDay, 
+        status, 
+        reflectionText, 
+        startTime, 
+        endTime
+    );
 
     if (reflectionInput) reflectionInput.value = ""; 
     const completionSection = document.getElementById("completion-section");
@@ -309,6 +335,9 @@ window.submitDayResult = function(status) {
 
     if (participant.currentDay < 7) {
         participant.currentDay++;
+        // 記錄下一天的開始時間
+        participant.dailyStartTimes[participant.currentDay] = new Date().toLocaleTimeString();
+        localStorage.setItem("jomo_dailyStartTimes", JSON.stringify(participant.dailyStartTimes));
         updateChallengeUI();
     } else {
         show11AiPage();
@@ -343,7 +372,16 @@ window.submitFinalClassSeat = function() {
         participant.classSeat = `${selectedLevel} - ${classSeatInput.value.trim()}`;
         localStorage.setItem("jomo_classSeat", participant.classSeat);
 
-        sendDataToCloud(participant.nickname, participant.initialScore, participant.classSeat, participant.currentDay, "Completed 11愛", "Achieve");
+        sendDataToCloud(
+            participant.nickname, 
+            participant.initialScore, 
+            participant.classSeat, 
+            participant.currentDay, 
+            "Completed 11愛", 
+            "Final Setup", 
+            "N/A", 
+            "N/A"
+        );
         alert("Class & Seat Number successfully saved and submitted!");
     } else {
         alert("Please enter your seat number/class info!");
@@ -409,7 +447,6 @@ window.updateChallengeUI = function() {
 window.updateScoreDisplay = function() {
     const scoreVal = document.getElementById("score-val");
     if (scoreVal) {
-        // 讓挑戰分數與問卷分開，只計算 7 天挑戰本身獲得的點數（例如完成 1 天 = 15 分，最高 105 分）
         const challengeScore = participant.completedDays.length * 15;
         scoreVal.innerText = challengeScore;
     }
@@ -435,13 +472,13 @@ window.renderHistoryLog = function() {
 // ==========================================
 // 6. Cloud Sync Function (Google Sheets)
 // ==========================================
-async function sendDataToCloud(nickname, initialScore, classSeat, day, status, reflection) {
+async function sendDataToCloud(nickname, initialScore, classSeat, day, status, reflection, startTime, endTime) {
     if (!WEB_APP_URL) {
         console.log("Running in standalone mode (Cloud Apps Script URL not set)");
         return;
     }
 
-    const payload = { nickname, initialScore, classSeat, day, status, reflection };
+    const payload = { nickname, initialScore, classSeat, day, status, reflection, startTime, endTime };
 
     try {
         await fetch(WEB_APP_URL, {
@@ -450,7 +487,7 @@ async function sendDataToCloud(nickname, initialScore, classSeat, day, status, r
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
-        console.log("Data successfully sent to cloud!");
+        console.log("Data successfully sent to cloud with timestamps!");
     } catch (error) {
         console.error("Cloud transmission failed:", error);
     }
