@@ -42,15 +42,20 @@ const missions = {
 // ==========================================
 // 2. Automatic State Restoration on Load
 // ==========================================
+// ==========================================
+// 2. Automatic State Restoration on Load (已修復問卷被跳過的問題)
+// ==========================================
 window.addEventListener("DOMContentLoaded", () => {
     const savedNickname = localStorage.getItem("jomo_nickname");
+    const savedInitialScore = localStorage.getItem("jomo_initialScore");
     const savedDay = localStorage.getItem("jomo_currentDay");
 
     generateQuestionnaireHTML();
 
-    if (savedNickname) {
+    // 只有當「有名字」且「已經完成過問卷（有初始分數）」時，才直接恢復到挑戰主畫面
+    if (savedNickname && savedInitialScore) {
         participant.nickname = savedNickname;
-        participant.initialScore = parseInt(localStorage.getItem("jomo_initialScore")) || 0;
+        participant.initialScore = parseInt(savedInitialScore);
         
         if (savedDay) {
             participant.currentDay = parseInt(savedDay);
@@ -59,7 +64,6 @@ window.addEventListener("DOMContentLoaded", () => {
             participant.lastCompletedDate = localStorage.getItem("jomo_lastCompletedDate") || "";
         }
 
-        // Switch directly to challenge dashboard
         document.getElementById("step-nickname").classList.add("hidden");
         document.getElementById("step-questionnaire").classList.add("hidden");
         document.getElementById("step-result").classList.add("hidden");
@@ -70,6 +74,11 @@ window.addEventListener("DOMContentLoaded", () => {
         renderHistoryLog();
         
         console.log(`Welcome back, ${savedNickname}! Current progress: Day ${participant.currentDay}`);
+    } 
+    else if (savedNickname) {
+        // 如果有名字，但還沒填過問卷（例如剛輸入完名字就重新整理），那就讓停留在問卷畫面
+        document.getElementById("step-nickname").classList.add("hidden");
+        document.getElementById("step-questionnaire").classList.remove("hidden");
     }
 });
 
