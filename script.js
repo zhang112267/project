@@ -3,6 +3,7 @@
 // ==========================================
 let participant = {
     nickname: "",
+    classSeat: "",
     currentDay: 1,
     completedDays: [],
     dailyStatus: {},
@@ -11,10 +12,9 @@ let participant = {
     initialScore: 0
 };
 
-// Optional Google Sheets Apps Script URL
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw8F1jKlDnoMKkVGB-3RUsNkfrvZ3s0pDN0FWy3wBnS_WXdSzvThpnKWwSqAyeXTZjT/exec"; 
 
-// 10 Deep Digital Anxiety Assessment Questions (English)
+// 10 Deep Digital Anxiety Assessment Questions
 const questionsList = [
     "1. Do you feel strong anxiety, emptiness, or restlessness when your phone is not around or you have no internet access?",
     "2. Do you frequently engage in late-night mindless \"doomscrolling,\" severely compressing your sleep time?",
@@ -28,11 +28,11 @@ const questionsList = [
     "10. Do you yearn to regain control over your life and experience the peace of JOMO (Joy of Missing Out)?"
 ];
 
-// 7-Day Challenge Missions Database (English, including Day 6 120-min deep focus)
+// 7-Day Challenge Missions Database
 const missions = {
-    1: { title: "Day 1: Screen Time Audit", desc: "Check your phone screen time and unlock frequency. Identify the 2 apps where you waste the most time and record them.", duration: 30 },
+    1: { title: "Day 1: Screen Time Audit", desc: "Check your screen time. Identify the two apps where you waste the most time.", duration: 0 },
     2: { title: "Day 2: Notification-Free Dinner", desc: "Put your phone on airplane mode or silent and place it out of sight. Enjoy a completely screen-free dinner and mindfully taste your food.", duration: 30 },
-    3: { title: "Day 3: Offline Morning Hour", desc: "Do not touch your phone for the first hour after waking up. Start your morning with hydration, stretching, or reading instead.", duration: 30 },
+    3: { title: "Day 3: Offline Bedtime Hour", desc: "Do not look at your phone for one hour before going to sleep. Let your mind wind down naturally.", duration: 60 },
     4: { title: "Day 4: Social Media Cleanup", desc: "Clean up your social media by unfollowing accounts and pages that do not bring positive value or energy to you.", duration: 45 },
     5: { title: "Day 5: Real-World Social Day", desc: "Arrange a face-to-face deep conversation with a family member or friend, keeping both phones placed face down.", duration: 45 },
     6: { title: "Day 6: 120-Min Deep Digital Detox", desc: "Engage in 120 minutes of complete offline focus. Put away your phone and fully immerse yourself in a physical hobby (e.g., reading, drawing, exercising, or playing an instrument).", duration: 120 },
@@ -40,22 +40,22 @@ const missions = {
 };
 
 // ==========================================
-// 2. Automatic State Restoration on Load
+// 2. Automatic State Restoration & Background Timer Sync
 // ==========================================
-// ==========================================
-// 2. Automatic State Restoration on Load (已修復問卷被跳過的問題)
-// ==========================================
+let timerInterval = null;
+
 window.addEventListener("DOMContentLoaded", () => {
     const savedNickname = localStorage.getItem("jomo_nickname");
     const savedInitialScore = localStorage.getItem("jomo_initialScore");
     const savedDay = localStorage.getItem("jomo_currentDay");
+    const savedClassSeat = localStorage.getItem("jomo_classSeat");
 
     generateQuestionnaireHTML();
 
-    // 只有當「有名字」且「已經完成過問卷（有初始分數）」時，才直接恢復到挑戰主畫面
     if (savedNickname && savedInitialScore) {
         participant.nickname = savedNickname;
         participant.initialScore = parseInt(savedInitialScore);
+        participant.classSeat = savedClassSeat || "";
         
         if (savedDay) {
             participant.currentDay = parseInt(savedDay);
@@ -67,22 +67,27 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById("step-nickname").classList.add("hidden");
         document.getElementById("step-questionnaire").classList.add("hidden");
         document.getElementById("step-result").classList.add("hidden");
-        document.getElementById("step-challenge").classList.remove("hidden");
-
-        updateChallengeUI();
-        updateScoreDisplay();
-        renderHistoryLog();
         
-        console.log(`Welcome back, ${savedNickname}! Current progress: Day ${participant.currentDay}`);
+        if (participant.completedDays.includes(7) || participant.currentDay > 7) {
+            show11AiPage();
+        } else {
+            document.getElementById("step-challenge").classList.remove("hidden");
+            updateChallengeUI();
+            updateScoreDisplay();
+            renderHistoryLog();
+            checkDayLockStatus();
+            
+            if (participant.currentDay > 1) {
+                restoreTimerState();
+            }
+        }
     } 
     else if (savedNickname) {
-        // 如果有名字，但還沒填過問卷（例如剛輸入完名字就重新整理），那就讓停留在問卷畫面
         document.getElementById("step-nickname").classList.add("hidden");
         document.getElementById("step-questionnaire").classList.remove("hidden");
     }
 });
 
-// Dynamically generate 10 questionnaire options
 function generateQuestionnaireHTML() {
     const container = document.getElementById("questions-container");
     if (!container) return;
@@ -105,7 +110,7 @@ function generateQuestionnaireHTML() {
 }
 
 // ==========================================
-// 3. Step-by-Step Flow Control
+// 3. Flow Control
 // ==========================================
 window.startChallengeSession = function() {
     const nicknameInput = document.getElementById("nickname-input");
@@ -125,7 +130,7 @@ window.submitQuestionnaire = function() {
     for (let i = 0; i < 10; i++) {
         const selected = document.querySelector(`input[name="q${i}"]:checked`);
         if (!selected) {
-            alert(`Question ${i + 1} has not been answered. Please answer all questions to ensure analysis accuracy!`);
+            alert(`Question ${i + 1} has not been answered. Please answer all questions!`);
             return;
         }
         totalScore += parseInt(selected.value);
@@ -137,13 +142,13 @@ window.submitQuestionnaire = function() {
     document.getElementById("step-questionnaire").classList.add("hidden");
     document.getElementById("step-result").classList.remove("hidden");
 
-    let analysisText = `Your Initial Digital Anxiety Score: ${totalScore} / 40 pts.<br>`;
+    let analysisText = `Your Initial Digital Anxiety Score: ${totalScore} / 40 pts.<br><br>`;
     if (totalScore >= 30) {
-        analysisText += "🔥 Status Analysis: High Digital Dependency. You frequently feel hijacked by notifications and desperately need the JOMO plan to reclaim control!";
+        analysisText += "🔥 <strong>Status Analysis: High Digital Dependency.</strong> You need the JOMO plan to reclaim your life control!";
     } else if (totalScore >= 20) {
-        analysisText += "⚠️ Status Analysis: Moderate Digital Interruption. Your life is occasionally disrupted by notifications. Moderate detoxing will significantly boost focus.";
+        analysisText += "⚠️ <strong>Status Analysis: Moderate Digital Interruption.</strong> Moderate detoxing will significantly boost focus.";
     } else {
-        analysisText += "✨ Status Analysis: Good Digital Control. You manage your time well and can use this plan to deepen your inner peace.";
+        analysisText += "✨ <strong>Status Analysis: Good Digital Control.</strong> You manage your time well and can use this plan to deepen your inner peace.";
     }
     document.getElementById("result-score-text").innerHTML = analysisText;
 };
@@ -157,15 +162,31 @@ window.startAssessment = function() {
     updateChallengeUI();
     updateScoreDisplay();
     renderHistoryLog();
+    checkDayLockStatus();
 };
 
 // ==========================================
-// 4. Countdown Timer & Skip Test Feature
+// 4. Background-Resilient Timer & Day Lock Rules
 // ==========================================
-let timerInterval = null;
-let targetTimestamp = null; 
+function checkDayLockStatus() {
+    const todayStr = new Date().toDateString();
+    const btn = document.getElementById("timer-btn");
+    
+    if (participant.lastCompletedDate === todayStr) {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "Completed Today - Next Unlock Tomorrow";
+        }
+    }
+}
 
 window.startOfflineTimer = function() {
+    const todayStr = new Date().toDateString();
+    if (participant.lastCompletedDate === todayStr) {
+        alert("You have already completed today's challenge! Please wait until tomorrow for the next challenge.");
+        return;
+    }
+
     const btn = document.getElementById("timer-btn");
     if (btn) {
         btn.disabled = true;
@@ -173,9 +194,36 @@ window.startOfflineTimer = function() {
     }
 
     const missionInfo = missions[participant.currentDay] || { duration: 30 };
-    const minutesAllowed = missionInfo.duration;
-    
-    targetTimestamp = Date.now() + minutesAllowed * 60 * 1000;
+    const durationMs = missionInfo.duration * 60 * 1000;
+    const targetTimestamp = Date.now() + durationMs;
+
+    localStorage.setItem("jomo_targetTimestamp", targetTimestamp);
+    localStorage.setItem("jomo_activeDay", participant.currentDay);
+
+    runTimerLoop(targetTimestamp);
+};
+
+function restoreTimerState() {
+    const targetTimestamp = localStorage.getItem("jomo_targetTimestamp");
+    const activeDay = localStorage.getItem("jomo_activeDay");
+
+    if (targetTimestamp && parseInt(activeDay) === participant.currentDay) {
+        const remainingMs = parseInt(targetTimestamp) - Date.now();
+        if (remainingMs > 0) {
+            const btn = document.getElementById("timer-btn");
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = "Challenge in Progress...";
+            }
+            runTimerLoop(parseInt(targetTimestamp));
+        } else {
+            finishTimerSequence();
+        }
+    }
+}
+
+function runTimerLoop(targetTimestamp) {
+    if (timerInterval) clearInterval(timerInterval);
 
     timerInterval = setInterval(() => {
         const now = Date.now();
@@ -183,23 +231,28 @@ window.startOfflineTimer = function() {
 
         if (remainingSeconds <= 0) {
             clearInterval(timerInterval);
+            localStorage.removeItem("jomo_targetTimestamp");
             displayTime(0);
-            alert("Congratulations on completing today's timer challenge! Please write your reflection and submit below.");
+            finishTimerSequence();
         } else {
             displayTime(remainingSeconds);
         }
     }, 1000);
-};
+}
+
+function finishTimerSequence() {
+    displayTime(0);
+    const completionSection = document.getElementById("completion-section");
+    if (completionSection) {
+        completionSection.classList.remove("hidden");
+    }
+}
 
 window.skipTimer = function() {
     if (timerInterval) clearInterval(timerInterval);
+    localStorage.removeItem("jomo_targetTimestamp");
     displayTime(0);
-    const btn = document.getElementById("timer-btn");
-    if (btn) {
-        btn.disabled = false;
-        btn.innerText = "Start Timer Challenge";
-    }
-    alert("[Test Mode] Successfully skipped timer wait!");
+    finishTimerSequence();
 };
 
 function displayTime(totalSeconds) {
@@ -222,69 +275,143 @@ function displayTime(totalSeconds) {
 }
 
 // ==========================================
-// 5. Task Submission & UI Updates
+// 5. Task Submission & 11愛 Transition
 // ==========================================
 window.submitDayResult = function(status) {
     const todayDateStr = new Date().toLocaleDateString("en-US"); 
+    const todayServerStr = new Date().toDateString();
 
     participant.dailyStatus[participant.currentDay] = status;
     participant.dailyCompletionDates[participant.currentDay] = todayDateStr; 
+    participant.lastCompletedDate = todayServerStr;
+
+    const reflectionInput = document.getElementById("reflection-input");
+    let reflectionText = "";
 
     if (status === "Achieve") {
+        reflectionText = reflectionInput ? reflectionInput.value.trim() : "";
+        if (!reflectionText) {
+            alert("Please provide your response before completing the challenge!");
+            return;
+        }
         if (!participant.completedDays.includes(participant.currentDay)) {
             participant.completedDays.push(participant.currentDay);
         }
+    } else {
+        reflectionText = "Failed";
     }
 
-    const reflectionInput = document.getElementById("reflection-input");
-    const reflectionText = reflectionInput ? reflectionInput.value : "";
-
-    sendDataToCloud(participant.nickname, participant.currentDay, status, reflectionText);
+    sendDataToCloud(participant.nickname, participant.initialScore, participant.classSeat, participant.currentDay, status, reflectionText);
 
     if (reflectionInput) reflectionInput.value = ""; 
+    const completionSection = document.getElementById("completion-section");
+    if (completionSection) completionSection.classList.add("hidden");
 
     if (participant.currentDay < 7) {
         participant.currentDay++;
-        timerInfoReset();
+        updateChallengeUI();
     } else {
-        alert("Amazing job! You have fully completed the 7-Day JOMO Digital Detox Challenge!");
+        show11AiPage();
     }
 
-    updateChallengeUI();
     updateScoreDisplay();
     renderHistoryLog(); 
+    checkDayLockStatus();
 
     localStorage.setItem("jomo_currentDay", participant.currentDay);
     localStorage.setItem("jomo_completedDays", JSON.stringify(participant.completedDays));
     localStorage.setItem("jomo_dailyStatus", JSON.stringify(participant.dailyStatus));
+    localStorage.setItem("jomo_lastCompletedDate", participant.lastCompletedDate);
+    localStorage.removeItem("jomo_targetTimestamp");
+    localStorage.removeItem("jomo_activeDay");
 };
 
-function timerInfoReset() {
-    const btn = document.getElementById("timer-btn");
-    if (btn) {
-        btn.disabled = false;
-        btn.innerText = "Start Timer Challenge";
-    }
-    displayTime(missions[participant.currentDay] ? missions[participant.currentDay].duration * 60 : 1800);
+function show11AiPage() {
+    const challengeDiv = document.getElementById("step-challenge");
+    if (challengeDiv) challengeDiv.classList.add("hidden");
+    
+    const finalPage = document.getElementById("step-11ai");
+    if (finalPage) finalPage.classList.remove("hidden");
 }
+
+window.submitFinalClassSeat = function() {
+    const levelSelect = document.getElementById("school-level-select");
+    const classSeatInput = document.getElementById("class-seat-input");
+    
+    if (classSeatInput && classSeatInput.value.trim() !== "") {
+        const selectedLevel = levelSelect ? levelSelect.value : "Senior High";
+        participant.classSeat = `${selectedLevel} - ${classSeatInput.value.trim()}`;
+        localStorage.setItem("jomo_classSeat", participant.classSeat);
+
+        sendDataToCloud(participant.nickname, participant.initialScore, participant.classSeat, participant.currentDay, "Completed 11愛", "Achieve");
+        alert("Class & Seat Number successfully saved and submitted!");
+    } else {
+        alert("Please enter your seat number/class info!");
+    }
+};
 
 window.updateChallengeUI = function() {
     const titleEl = document.getElementById("challenge-title");
     const descEl = document.getElementById("mission-desc");
+    const timerDisplay = document.getElementById("timer-display");
+    const timerBtn = document.getElementById("timer-btn");
+    const skipBtn = document.querySelector(".btn-skip");
+    const completionSection = document.getElementById("completion-section");
+    const inputLabel = document.getElementById("input-label");
+    const reflectionInput = document.getElementById("reflection-input");
+
     const mission = missions[participant.currentDay];
 
     if (mission) {
         if (titleEl) titleEl.innerText = mission.title;
         if (descEl) descEl.innerText = mission.desc;
-        displayTime(mission.duration * 60);
+        
+        if (reflectionInput) reflectionInput.value = "";
+
+        if (participant.currentDay === 1) {
+            if (timerDisplay) timerDisplay.classList.add("hidden");
+            if (timerBtn) timerBtn.classList.add("hidden");
+            if (skipBtn) timerBtn.classList.add("hidden");
+            if (completionSection) completionSection.classList.remove("hidden");
+            if (inputLabel) inputLabel.innerText = "✍️ Enter the two apps where you waste the most time:";
+            if (reflectionInput) reflectionInput.placeholder = "e.g., Instagram, TikTok...";
+        } else {
+            if (timerDisplay) timerDisplay.classList.remove("hidden");
+            if (timerBtn) {
+                timerBtn.classList.remove("hidden");
+                timerBtn.disabled = false;
+                timerBtn.innerText = "Start Timer Challenge";
+            }
+            if (skipBtn) skipBtn.classList.remove("hidden");
+            if (completionSection) completionSection.classList.add("hidden");
+
+            if (participant.currentDay === 2) {
+                if (inputLabel) inputLabel.innerText = "✍️ How do you feel after today's challenge?";
+                if (reflectionInput) reflectionInput.placeholder = "Describe your feelings after the notification-free dinner...";
+            } else if (participant.currentDay === 3) {
+                if (inputLabel) inputLabel.innerText = "✍️ Did you sleep better? How was your sleep?";
+                if (reflectionInput) reflectionInput.placeholder = "Describe your sleep quality after avoiding phone before bed...";
+            } else if (participant.currentDay === 7) {
+                if (inputLabel) inputLabel.innerText = "✍️ JOMO Core Reflection & Summary:";
+                if (reflectionInput) reflectionInput.placeholder = "Reflect on your 7-day journey and long-term plan...";
+            } else {
+                if (inputLabel) inputLabel.innerText = "✍️ What did you do today during this challenge?";
+                if (reflectionInput) reflectionInput.placeholder = "Describe what you did during this offline period...";
+            }
+
+            if (!localStorage.getItem("jomo_targetTimestamp")) {
+                displayTime(mission.duration * 60);
+            }
+        }
     }
 };
 
 window.updateScoreDisplay = function() {
     const scoreVal = document.getElementById("score-val");
     if (scoreVal) {
-        const taskBonus = participant.completedDays.length * 15;
-        scoreVal.innerText = participant.initialScore + taskBonus;
+        // 讓挑戰分數與問卷分開，只計算 7 天挑戰本身獲得的點數（例如完成 1 天 = 15 分，最高 105 分）
+        const challengeScore = participant.completedDays.length * 15;
+        scoreVal.innerText = challengeScore;
     }
 };
 
@@ -308,13 +435,13 @@ window.renderHistoryLog = function() {
 // ==========================================
 // 6. Cloud Sync Function (Google Sheets)
 // ==========================================
-async function sendDataToCloud(nickname, day, status, reflection) {
+async function sendDataToCloud(nickname, initialScore, classSeat, day, status, reflection) {
     if (!WEB_APP_URL) {
         console.log("Running in standalone mode (Cloud Apps Script URL not set)");
         return;
     }
 
-    const payload = { nickname, day, status, reflection };
+    const payload = { nickname, initialScore, classSeat, day, status, reflection };
 
     try {
         await fetch(WEB_APP_URL, {
